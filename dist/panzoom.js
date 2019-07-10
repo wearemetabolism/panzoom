@@ -27,6 +27,7 @@ module.exports = createPanZoom
  * @param {Object} options that configure behavior.
  */
 function createPanZoom(domElement, options) {
+
   options = options || {}
 
   var panController = options.controller
@@ -100,6 +101,7 @@ function createPanZoom(domElement, options) {
   }
 
   var moveByAnimation
+  var setPosAnimation
   var zoomToAnimation
 
   var multiTouch
@@ -111,6 +113,7 @@ function createPanZoom(domElement, options) {
     dispose: dispose,
     moveBy: internalMoveBy,
     moveTo: moveTo,
+    setPos: setPos,
     centerOn: centerOn,
     zoomTo: publicZoomTo,
     zoomAbs: zoomAbs,
@@ -355,15 +358,9 @@ function createPanZoom(domElement, options) {
 
     transform.x = size.x - ratio * (size.x - transform.x)
     transform.y = size.y - ratio * (size.y - transform.y)
+    transform.scale *= ratio
 
-    // TODO: https://github.com/anvaka/panzoom/issues/112
-    if (bounds && boundsPadding === 1 && minZoom == 1) {
-      transform.scale *= ratio
-      keepTransformInsideBounds()
-    } else {
-      var transformAdjusted = keepTransformInsideBounds()
-      if (!transformAdjusted) transform.scale *= ratio
-    }
+    var transformAdjusted = keepTransformInsideBounds()
 
     triggerEvent('zoom')
 
@@ -397,6 +394,7 @@ function createPanZoom(domElement, options) {
     }
 
     if (moveByAnimation) moveByAnimation.cancel()
+    if (setPosAnimation) setPosAnimation.cancel()
 
     var from = { x: 0, y: 0 }
     var to = { x: dx, y : dy }
@@ -409,6 +407,29 @@ function createPanZoom(domElement, options) {
 
         lastX = v.x
         lastY = v.y
+      }
+    })
+  }
+
+  function setPos(dx, dy, scale) {
+
+    smoothScroll.cancel()
+
+    if (setPosAnimation) setPosAnimation.cancel()
+    if (moveByAnimation) moveByAnimation.cancel()
+    if (zoomToAnimation) zoomToAnimation.cancel()
+
+    var from = { x: transform.x, y: transform.y, scale: transform.scale }
+    var to = { x: dx, y: dy, scale: scale }
+
+    setPosAnimation = animate(from, to, {
+      duration: 600,
+      step: function(v) {
+        moveTo(v.x, v.y);
+        transform.scale = v.scale;
+      },
+      done: function(){
+        moveTo(dx, dy);
       }
     })
   }
@@ -712,7 +733,7 @@ function createPanZoom(domElement, options) {
 
     var scaleMultiplier = getScaleMultiplier(e.deltaY)
 
-    if (scaleMultiplier !== 1) {
+    if (scaleMultiplier !== 1 ) {
       var offset = getOffsetXY(e)
       publicZoomTo(offset.x, offset.y, scaleMultiplier)
       e.preventDefault()

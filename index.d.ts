@@ -41,6 +41,7 @@ declare module "panzoom" {
       y: number;
       scale: number;
     };
+    setPos: (clientX: number, clientY: number, zoomLevel: number) => void;
     showRectangle: (rect: ClientRect) => void;
     pause: () => void;
     resume: () => void;
