@@ -56,6 +56,10 @@ function createPanZoom(domElement, options) {
     panController.initTransform(transform)
   }
 
+  document.addEventListener('touchmove', function (event) {
+    if (event.scale !== 1) { event.preventDefault(); }
+  }, { passive: false });
+
   var filterKey = typeof options.filterKey === 'function' ? options.filterKey : noop;
   // TODO: likely need to unite pinchSpeed with zoomSpeed
   var pinchSpeed = typeof options.pinchSpeed === 'number' ? options.pinchSpeed : 1;
@@ -72,6 +76,13 @@ function createPanZoom(domElement, options) {
 
   if (options.autocenter) {
     autocenter()
+  }
+
+  if( !options.smoothScroll )
+    options.smoothScroll = {}
+
+  options.smoothScroll.scrollend = function(){
+    triggerEvent('scrollend')
   }
 
   var frameAnimation
@@ -125,7 +136,8 @@ function createPanZoom(domElement, options) {
 
     getTransform: getTransformModel,
     getMinZoom: getMinZoom,
-    getMaxZoom: getMaxZoom
+    getMaxZoom: getMaxZoom,
+    getZoom: getZoom
   }
 
   eventify(api);
@@ -146,6 +158,10 @@ function createPanZoom(domElement, options) {
 
   function isPaused() {
     return paused;
+  }
+
+  function getZoom() {
+    return transform.scale;
   }
 
   function showRectangle(rect) {
@@ -421,14 +437,18 @@ function createPanZoom(domElement, options) {
     var from = { x: transform.x, y: transform.y, scale: transform.scale }
     var to = { x: dx, y: dy, scale: scale }
 
+    triggerEvent('panstart')
+
     setPosAnimation = animate(from, to, {
       duration: 600,
       step: function(v) {
         moveTo(v.x, v.y);
         transform.scale = v.scale;
+        triggerEvent('zoom')
       },
       done: function(){
-        moveTo(dx, dy);
+        triggerEvent('panend')
+        triggerEvent('scrollend')
       }
     })
   }
