@@ -56,7 +56,7 @@ function createPanZoom(domElement, options) {
     panController.initTransform(transform)
   }
 
-  document.addEventListener('touchmove', function (event) {
+  domElement.addEventListener('touchmove', function (event) {
     if (event.scale !== 1) { event.preventDefault(); }
   }, { passive: false });
 
