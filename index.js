@@ -426,7 +426,7 @@ function createPanZoom(domElement, options) {
     })
   }
 
-  function setPos(dx, dy, scale) {
+  function setPos(dx, dy, scale, duration) {
 
     smoothScroll.cancel()
 
@@ -439,8 +439,11 @@ function createPanZoom(domElement, options) {
 
     triggerEvent('panstart')
 
+    if( typeof duration == 'undefined' )
+      duration = 600;
+
     setPosAnimation = animate(from, to, {
-      duration: 600,
+      duration: duration,
       step: function(v) {
         moveTo(v.x, v.y);
         transform.scale = v.scale;
