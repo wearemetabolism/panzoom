@@ -58,7 +58,7 @@ function createPanZoom(domElement, options) {
   }
 
   domElement.addEventListener('touchmove', function (event) {
-    if (event.scale !== 1) { event.preventDefault(); }
+    if ('scale' in event && event.scale !== 1) { event.preventDefault(); }
   }, { passive: false });
 
   var filterKey = typeof options.filterKey === 'function' ? options.filterKey : noop;
